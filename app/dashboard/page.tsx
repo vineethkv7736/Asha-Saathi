@@ -78,8 +78,15 @@ export default function Dashboard() {
             <DashboardStats />
           </div>
 
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Today's Tasks */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+              <TodaysTasks />
+            </div>
+          </div>
+
           {/* Quick Actions */}
-          <div className="mb-8">
+          <div className="my-8">
             <div className="flex items-center mb-4">
               <Activity className="h-5 w-5 text-green-600 mr-2" />
               <h2 className="text-xl font-semibold text-gray-900">Quick Actions</h2>
@@ -88,12 +95,6 @@ export default function Dashboard() {
           </div>
 
           {/* Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Today's Tasks */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
-              <TodaysTasks />
-            </div>
-          </div>
         </div>
       </main>
       

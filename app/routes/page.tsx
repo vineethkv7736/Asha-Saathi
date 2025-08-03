@@ -9,6 +9,7 @@ import { VisitPlanner } from '@/components/routes/VisitPlanner';
 import { TodaysRoute } from '@/components/routes/TodaysRoute';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import NearestVisitorMap from '@/components/routes/NearestVisitorMap';
 
 export default function RoutesPage() {
   const { user, loading } = useAuth();
@@ -41,7 +42,7 @@ export default function RoutesPage() {
           <h1 className="text-2xl font-bold text-gray-900">
             {t('routes.title')}
           </h1>
-          
+          <NearestVisitorMap motherId={user.id} />
           <TodaysRoute />
           <VisitPlanner />
           <RouteOptimizer />
