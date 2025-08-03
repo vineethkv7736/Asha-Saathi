@@ -93,11 +93,6 @@ export default function Dashboard() {
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
               <TodaysTasks />
             </div>
-
-            {/* Recent Alerts */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
-              <RecentAlerts />
-            </div>
           </div>
         </div>
       </main>

@@ -1,16 +1,16 @@
 'use client';
 
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Calendar, Users, Camera, Eye } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { childService, motherService } from '@/lib/database';
-import type { Database } from '@/lib/supabase';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Baby, Eye, Plus, Activity } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { childService, vaccinationService } from '@/lib/database';
+import type { Database } from '@/lib/supabase';
 
 type Child = Database['public']['Tables']['children']['Row'];
+type Vaccination = Database['public']['Tables']['vaccinations']['Row'];
 type Mother = Database['public']['Tables']['mothers']['Row'];
 
 interface ChildrenGridProps {
@@ -19,21 +19,24 @@ interface ChildrenGridProps {
 }
 
 export function ChildrenGrid({ searchTerm, filterAge }: ChildrenGridProps) {
-  const { user } = useAuth();
   const router = useRouter();
   const [children, setChildren] = useState<Child[]>([]);
-  const [mothers, setMothers] = useState<Mother[]>([]);
+  const [vaccinations, setVaccinations] = useState<Vaccination[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [childrenData, mothersData] = await Promise.all([
-          childService.getAll(),
-          motherService.getAll()
-        ]);
+        const childrenData = await childService.getAll();
         setChildren(childrenData);
-        setMothers(mothersData);
+        
+        // Load vaccination data for all children
+        const vaccinationPromises = childrenData.map(child => 
+          vaccinationService.getByChildId(child.id)
+        );
+        const vaccinationResults = await Promise.all(vaccinationPromises);
+        const validVaccinations = vaccinationResults.filter(v => v !== null) as Vaccination[];
+        setVaccinations(validVaccinations);
       } catch (error) {
         console.error('Error loading data:', error);
       } finally {
@@ -44,9 +47,9 @@ export function ChildrenGrid({ searchTerm, filterAge }: ChildrenGridProps) {
     loadData();
   }, []);
 
-  const getMotherName = (motherId: string) => {
-    const mother = mothers.find(m => m.id === motherId);
-    return mother?.name || 'Unknown Mother';
+  const getVaccinationProgress = (childId: string) => {
+    const vaccination = vaccinations.find(v => v.child_id === childId);
+    return vaccination ? vaccination.progress_percentage : 0;
   };
 
   const getAgeString = (ageInMonths: number) => {
@@ -64,9 +67,7 @@ export function ChildrenGrid({ searchTerm, filterAge }: ChildrenGridProps) {
   };
 
   const filteredChildren = children.filter(child => {
-    const motherName = getMotherName(child.mother_id);
-    const matchesSearch = child.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         motherName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = child.name.toLowerCase().includes(searchTerm.toLowerCase());
     
     let matchesFilter = true;
     if (filterAge !== 'all') {
@@ -115,7 +116,7 @@ export function ChildrenGrid({ searchTerm, filterAge }: ChildrenGridProps) {
               <div>
                 <h3 className="font-semibold text-lg text-gray-900">{child.name}</h3>
                 <p className="text-sm text-gray-600">{getAgeString(child.age_in_months)}</p>
-                <p className="text-sm text-blue-600">Mother: {getMotherName(child.mother_id)}</p>
+                <p className="text-sm text-blue-600">Vaccination: {getVaccinationProgress(child.id)}%</p>
               </div>
               <div className="flex flex-col items-end space-y-1">
                 <Badge className={getHealthStatusColor(child.health_status)}>
@@ -123,7 +124,7 @@ export function ChildrenGrid({ searchTerm, filterAge }: ChildrenGridProps) {
                 </Badge>
                 {child.has_photo && (
                   <Badge variant="outline" className="text-xs">
-                    <Camera className="h-3 w-3 mr-1" />
+                    <Baby className="h-3 w-3 mr-1" />
                     AI Screened
                   </Badge>
                 )}
@@ -132,29 +133,28 @@ export function ChildrenGrid({ searchTerm, filterAge }: ChildrenGridProps) {
 
             <div className="space-y-2 mb-4">
               <div className="flex items-center text-sm text-gray-600">
-                <Calendar className="h-4 w-4 mr-2" />
+                <Activity className="h-4 w-4 mr-2" />
                 Last screening: {new Date(child.last_screening).toLocaleDateString()}
               </div>
-              <div className="flex items-center text-sm text-gray-600">
-                <Users className="h-4 w-4 mr-2" />
-                Vaccinations: {child.vaccinations_completed}/{child.vaccinations_total}
-              </div>
+                              <div className="flex items-center text-sm text-gray-600">
+                  <Activity className="h-4 w-4 mr-2" />
+                  Vaccination Progress: {getVaccinationProgress(child.id)}%
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                  <div
+                    className="bg-blue-600 h-2 rounded-full"
+                    style={{ width: `${getVaccinationProgress(child.id)}%` }}
+                  ></div>
+                </div>
             </div>
 
             <div className="flex items-center justify-between">
-              <div className="flex-1 bg-gray-200 rounded-full h-2 mr-4">
-                <div 
-                  className="bg-blue-600 h-2 rounded-full" 
-                  style={{ 
-                    width: `${(child.vaccinations_completed / child.vaccinations_total) * 100}%` 
-                  }}
-                ></div>
-              </div>
+        
               <div className="flex space-x-2">
                 <Button
                   size="sm"
                   onClick={() => router.push(`/screening/child/${child.id}`)}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-blue-600 hover:bg-blue-700 px-8"
                 >
                   Screen
                 </Button>
@@ -162,7 +162,7 @@ export function ChildrenGrid({ searchTerm, filterAge }: ChildrenGridProps) {
                   size="sm"
                   variant="outline"
                   onClick={() => router.push(`/children/${child.id}`)}
-                  className="border-gray-300 hover:bg-gray-50"
+                  className="border-gray-300 hover:bg-gray-50 px-8"
                 >
                   View
                 </Button>

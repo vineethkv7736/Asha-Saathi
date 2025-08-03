@@ -66,6 +66,38 @@ CREATE TABLE public.screenings (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- 7. Create examinations table
+CREATE TABLE public.examinations (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    person_id UUID NOT NULL,
+    person_type TEXT CHECK (person_type IN ('mother', 'child')) NOT NULL,
+    answers JSONB NOT NULL,
+    bmi DECIMAL(5,2),
+    bmi_category TEXT CHECK (bmi_category IN ('underweight', 'normal', 'overweight', 'obese')),
+    health_status TEXT CHECK (health_status IN ('healthy', 'needs_attention', 'critical')),
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 8. Create vaccinations table
+CREATE TABLE public.vaccinations (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    child_id UUID REFERENCES public.children(id) ON DELETE CASCADE,
+    bcg BOOLEAN DEFAULT FALSE,
+    opv_0 BOOLEAN DEFAULT FALSE,
+    hepatitis_b BOOLEAN DEFAULT FALSE,
+    pentavalent_1 BOOLEAN DEFAULT FALSE,
+    rotavirus_1 BOOLEAN DEFAULT FALSE,
+    measles_rubella_1 BOOLEAN DEFAULT FALSE,
+    total_vaccines INTEGER DEFAULT 6,
+    completed_vaccines INTEGER DEFAULT 0,
+    progress_percentage DECIMAL(5,2) DEFAULT 0.00,
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- 7. Create updated_at triggers
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
@@ -87,11 +119,21 @@ CREATE TRIGGER update_visits_updated_at BEFORE UPDATE ON public.visits
 CREATE TRIGGER update_screenings_updated_at BEFORE UPDATE ON public.screenings
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_examinations_updated_at BEFORE UPDATE ON public.examinations
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_vaccinations_updated_at BEFORE UPDATE ON public.vaccinations
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- 8. Enable Row Level Security (RLS)
 ALTER TABLE public.mothers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.children ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.visits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.screenings ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.examinations ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.vaccinations ENABLE ROW LEVEL SECURITY;
 
 -- 9. Create RLS policies (allow all authenticated users to access all data)
 CREATE POLICY "Allow authenticated users to read mothers" ON public.mothers
@@ -140,6 +182,30 @@ CREATE POLICY "Allow authenticated users to update screenings" ON public.screeni
     FOR UPDATE USING (auth.role() = 'authenticated');
 
 CREATE POLICY "Allow authenticated users to delete screenings" ON public.screenings
+    FOR DELETE USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Allow authenticated users to read examinations" ON public.examinations
+    FOR SELECT USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Allow authenticated users to insert examinations" ON public.examinations
+    FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "Allow authenticated users to update examinations" ON public.examinations
+    FOR UPDATE USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Allow authenticated users to delete examinations" ON public.examinations
+    FOR DELETE USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Allow authenticated users to read vaccinations" ON public.vaccinations
+    FOR SELECT USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Allow authenticated users to insert vaccinations" ON public.vaccinations
+    FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "Allow authenticated users to update vaccinations" ON public.vaccinations
+    FOR UPDATE USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Allow authenticated users to delete vaccinations" ON public.vaccinations
     FOR DELETE USING (auth.role() = 'authenticated');
 
 -- 10. Insert sample data

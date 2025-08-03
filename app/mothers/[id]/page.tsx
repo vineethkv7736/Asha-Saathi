@@ -22,7 +22,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { motherService, childService, visitService, screeningService } from '@/lib/database';
+import { motherService, childService, visitService, screeningService, examinationService } from '@/lib/database';
 
 interface Mother {
   id: string;
@@ -73,6 +73,18 @@ interface Screening {
   created_at: string;
 }
 
+interface Examination {
+  id: string;
+  person_id: string;
+  person_type: 'mother' | 'child';
+  answers: any;
+  bmi?: number;
+  bmi_category?: 'underweight' | 'normal' | 'overweight' | 'obese';
+  health_status: 'healthy' | 'needs_attention' | 'critical';
+  notes?: string;
+  created_at: string;
+}
+
 export default function MotherViewPage({ params }: { params: { id: string } }) {
   const { user, loading } = useAuth();
   const { t } = useLanguage();
@@ -83,6 +95,7 @@ export default function MotherViewPage({ params }: { params: { id: string } }) {
   const [children, setChildren] = useState<Child[]>([]);
   const [visits, setVisits] = useState<Visit[]>([]);
   const [screenings, setScreenings] = useState<Screening[]>([]);
+  const [examinations, setExaminations] = useState<Examination[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
   useEffect(() => {
@@ -113,6 +126,10 @@ export default function MotherViewPage({ params }: { params: { id: string } }) {
           // Load screenings for mother
           const screeningsData = await screeningService.getByPersonId(id, 'mother');
           setScreenings(screeningsData || []);
+
+          // Load examinations for mother
+          const examinationsData = await examinationService.getByPersonId(id, 'mother');
+          setExaminations(examinationsData || []);
         }
       } catch (error) {
         console.error('Error loading mother data:', error);
@@ -206,14 +223,23 @@ export default function MotherViewPage({ params }: { params: { id: string } }) {
               <span>Back</span>
             </Button>
           </div>
-          <div className="flex justify-between items-center mt-4 space-x-2">
+          <div className="flex flex-col gap-2 justify-between items-center mt-4 space-x-2">
             <h1 className="text-2xl font-bold text-gray-900">{mother.name}</h1>
-            <Button
-              onClick={() => router.push(`/screening/mother/${mother.id}`)}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              Screen Mother
-            </Button>
+            <div className="flex space-x-2">
+              <Button
+                onClick={() => router.push(`/examination/mother/${mother.id}`)}
+                variant="outline"
+                className="border-green-600 text-green-600 hover:bg-green-50"
+              >
+                Conduct Examination
+              </Button>
+              <Button
+                onClick={() => router.push(`/screening/mother/${mother.id}`)}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                Screen Mother
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -458,6 +484,74 @@ export default function MotherViewPage({ params }: { params: { id: string } }) {
                   </div>
                 ) : (
                   <p className="text-gray-500 text-center py-4">No screenings recorded yet.</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Examinations */}
+            <Card className="professional-card">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <FileText className="h-5 w-5 text-green-600" />
+                  <span>Examinations ({examinations.length})</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {examinations.length > 0 ? (
+                  <div className="space-y-4">
+                    {examinations.map((examination) => (
+                      <div key={examination.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center space-x-2">
+                            <h4 className="font-medium text-gray-900">
+                              Health Examination
+                            </h4>
+                          </div>
+                          <Badge className={getHealthStatusColor(examination.health_status)}>
+                            {examination.health_status.replace('_', ' ').toUpperCase()}
+                          </Badge>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                          <div className="space-y-2">
+                            <div className="flex justify-between">
+                              <span className="text-sm font-medium text-gray-600">Date:</span>
+                              <span className="text-sm text-gray-900">{formatDate(examination.created_at)}</span>
+                            </div>
+                            {examination.bmi && (
+                              <div className="flex justify-between">
+                                <span className="text-sm font-medium text-gray-600">BMI:</span>
+                                <span className="text-sm text-gray-900 font-semibold">
+                                  {examination.bmi} ({examination.bmi_category})
+                                </span>
+                              </div>
+                            )}
+                            {examination.notes && (
+                              <div className="flex justify-between">
+                                <span className="text-sm font-medium text-gray-600">Notes:</span>
+                                <span className="text-sm text-gray-900">{examination.notes}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Examination Answers */}
+                        <div className="mt-3 pt-3 border-t border-gray-200">
+                          <h5 className="text-sm font-medium text-gray-700 mb-2">Examination Answers:</h5>
+                          <div className="space-y-1">
+                            {Object.entries(examination.answers).map(([key, value]) => (
+                              <div key={key} className="flex justify-between text-sm">
+                                <span className="text-gray-600 capitalize">{key.replace('_', ' ')}:</span>
+                                <span className="text-gray-900 font-medium">{value as string}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-center py-4">No examinations recorded yet.</p>
                 )}
               </CardContent>
             </Card>

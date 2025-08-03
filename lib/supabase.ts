@@ -172,6 +172,94 @@ export interface Database {
           updated_at?: string;
         };
       };
+      examinations: {
+        Row: {
+          id: string;
+          person_id: string;
+          person_type: 'mother' | 'child';
+          answers: any;
+          bmi: number | null;
+          bmi_category: 'underweight' | 'normal' | 'overweight' | 'obese' | null;
+          health_status: 'healthy' | 'needs_attention' | 'critical';
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          person_id: string;
+          person_type: 'mother' | 'child';
+          answers: any;
+          bmi?: number | null;
+          bmi_category?: 'underweight' | 'normal' | 'overweight' | 'obese' | null;
+          health_status: 'healthy' | 'needs_attention' | 'critical';
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          person_id?: string;
+          person_type?: 'mother' | 'child';
+          answers?: any;
+          bmi?: number | null;
+          bmi_category?: 'underweight' | 'normal' | 'overweight' | 'obese' | null;
+          health_status?: 'healthy' | 'needs_attention' | 'critical';
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      vaccinations: {
+        Row: {
+          id: string;
+          child_id: string;
+          bcg: boolean;
+          opv_0: boolean;
+          hepatitis_b: boolean;
+          pentavalent_1: boolean;
+          rotavirus_1: boolean;
+          measles_rubella_1: boolean;
+          total_vaccines: number;
+          completed_vaccines: number;
+          progress_percentage: number;
+          last_updated: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          child_id: string;
+          bcg?: boolean;
+          opv_0?: boolean;
+          hepatitis_b?: boolean;
+          pentavalent_1?: boolean;
+          rotavirus_1?: boolean;
+          measles_rubella_1?: boolean;
+          total_vaccines?: number;
+          completed_vaccines?: number;
+          progress_percentage?: number;
+          last_updated?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          child_id?: string;
+          bcg?: boolean;
+          opv_0?: boolean;
+          hepatitis_b?: boolean;
+          pentavalent_1?: boolean;
+          rotavirus_1?: boolean;
+          measles_rubella_1?: boolean;
+          total_vaccines?: number;
+          completed_vaccines?: number;
+          progress_percentage?: number;
+          last_updated?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
   };
 } 
